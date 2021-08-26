@@ -1,12 +1,15 @@
 package com.miras.weibov2.weibo.service;
 
+import com.miras.weibov2.weibo.dto.TokenPairId;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -18,6 +21,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static java.util.Arrays.stream;
+
 @Service
 @RequiredArgsConstructor
 public class JwtService {
@@ -28,55 +33,77 @@ public class JwtService {
     @Value("${jwt.key.refresh}")
     String refreshTokenKey;
 
+    @Autowired
+    RedisTemplate<String, String> redisTemplate;
 
-    public String generateToken(String typeOfToken, Authentication authentication) {
+
+    public List<String> generateTokens(Authentication authentication) {
+        List<String> tokens = new ArrayList<>();
         Date issuedTime = new Date();
-        Calendar expirationTime = Calendar.getInstance();
-        expirationTime.setTime(issuedTime);
-        if (typeOfToken == "access-token" ) {
-            expirationTime.add(Calendar.MINUTE, 30);
-        } else expirationTime.add(Calendar.HOUR_OF_DAY, 24);
+        String uuid = UUID.randomUUID().toString();
+        Calendar accessExpirationTime = Calendar.getInstance();
+        accessExpirationTime.setTime(issuedTime);
+        Calendar refreshExpirationTime = Calendar.getInstance();
+        refreshExpirationTime.setTime(issuedTime);
+        accessExpirationTime.add(Calendar.MINUTE, 30);
+       refreshExpirationTime.add(Calendar.HOUR_OF_DAY, 24);
 
-        String token = Jwts.builder()
-                .setHeaderParam("type", typeOfToken)
-                .claim("username", authentication.getName())
+        String accessToken = Jwts.builder()
+                .setHeaderParam("type", "access-token")
+                .claim("userId", authentication.getName())
                 .claim("authorities", authentication.getAuthorities())
+                .claim("tokenPairId", uuid)
                 .setIssuedAt(issuedTime)
-                .setExpiration(expirationTime.getTime())
-                .signWith(Keys.hmacShaKeyFor((typeOfToken == "access-token" ? accessTokenKey : refreshTokenKey).getBytes(StandardCharsets.UTF_8)))
+                .setExpiration(accessExpirationTime.getTime())
+                .signWith(Keys.hmacShaKeyFor(accessTokenKey.getBytes(StandardCharsets.UTF_8)))
                 .compact();
-        return token;
+        String refreshToken = Jwts.builder()
+                .setHeaderParam("type", "refresh-token")
+                .claim("userId", authentication.getName())
+                .claim("authorities", authentication.getAuthorities())
+                .claim("tokenPairId", uuid)
+                .setIssuedAt(issuedTime)
+                .setExpiration(refreshExpirationTime.getTime())
+                .signWith(Keys.hmacShaKeyFor(refreshTokenKey.getBytes(StandardCharsets.UTF_8)))
+                .compact();
+        tokens.add(accessToken);
+        tokens.add(refreshToken);
+
+
+        return tokens;
+
     }
 
-    public Jws<Claims> validateTokenAndReturnClaims(String token, String typeOfToken) {
+    public Jws<Claims> validateTokenAndReturnClaims(String token, String typeOfToken) throws ExpiredJwtException, Exception{
         Jws<Claims> claims = null;
 
-        try {
-            claims = Jwts.parserBuilder()
+        claims = Jwts.parserBuilder()
                     .setSigningKey(Keys.hmacShaKeyFor((typeOfToken == "access-token" ? accessTokenKey : refreshTokenKey).getBytes(StandardCharsets.UTF_8)))
                     .build()
                     .parseClaimsJws(token);
-        } catch (ExpiredJwtException e) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT,"Token has been expired");
-        }
+
         return claims;
     }
-    public org.springframework.security.core.userdetails.User returnUser(String token, String typeOfToken) {
+    public org.springframework.security.core.userdetails.User returnUser(Jws<Claims> claims) {
 
-        Jws<Claims> claims = null;
-
-        claims = validateTokenAndReturnClaims(token, typeOfToken );
-
-        List<GrantedAuthority> listOfGrantedAuthorities = new ArrayList<>();
+        Collection<GrantedAuthority> listOfGrantedAuthorities = new ArrayList<>();
         List<LinkedHashMap<String, String>> stringAuthoritites = (List<LinkedHashMap<String, String>>) claims.getBody().get("authorities");
         for (LinkedHashMap s: stringAuthoritites) {
             listOfGrantedAuthorities.add(new SimpleGrantedAuthority((String) s.get("authority")));
         }
 
-        org.springframework.security.core.userdetails.User user = new org.springframework.security.core.userdetails.User((String) claims.getBody().get("username"),
+        org.springframework.security.core.userdetails.User user = new org.springframework.security.core.userdetails.User((String) claims.getBody().get("userId"),
                 "default-password",true,true,true,true, listOfGrantedAuthorities);
         return user;
 
     }
+    public TokenPairId tokenPairId(Jws<Claims> claims){
+        TokenPairId tokenPairId = new TokenPairId();
+        tokenPairId.setId((String) claims.getBody().get("tokenPairId"));
+        tokenPairId.setExpiresAt(claims.getBody().getExpiration());
+        return tokenPairId;
+    }
+
+
 }
 

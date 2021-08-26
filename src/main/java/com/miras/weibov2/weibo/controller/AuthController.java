@@ -36,7 +36,6 @@ public class AuthController {
 
     @PostMapping("/accountVerification")
     ResponseEntity<String> verifyAccount(@RequestBody VerificationRequest verificationRequest)  {
-
         authService.verifyAccount(verificationRequest);
         return new ResponseEntity<>("Account succesfully verified", HttpStatus.OK);
 
@@ -58,6 +57,8 @@ public class AuthController {
             return ResponseEntity.ok().build();
         else return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
     }
+
+
 
 
 

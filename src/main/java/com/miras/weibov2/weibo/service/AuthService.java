@@ -1,22 +1,23 @@
 package com.miras.weibov2.weibo.service;
 
-import com.miras.weibov2.weibo.dto.AuthResponse;
-import com.miras.weibov2.weibo.dto.LoginRequest;
-import com.miras.weibov2.weibo.dto.SignupRequest;
-import com.miras.weibov2.weibo.dto.VerificationRequest;
+import com.miras.weibov2.weibo.dto.*;
 import com.miras.weibov2.weibo.entity.User;
 import com.miras.weibov2.weibo.repository.UserRepository;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jws;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
@@ -32,15 +33,17 @@ public class AuthService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final JwtService jwtService;
+    private final TokenPairIdService tokenPairIdService;
 
 
 
     public AuthResponse login(LoginRequest loginRequest){
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+        List<String> tokens = jwtService.generateTokens(authentication);
         return AuthResponse.builder()
-                .accessToken(jwtService.generateToken("access-token", authentication))
-                .refreshToken(jwtService.generateToken("refresh-token", authentication))
+                .accessToken(tokens.get(0))
+                .refreshToken(tokens.get(1))
                 .build();
     }
 
@@ -60,6 +63,7 @@ public class AuthService {
                 user.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
                 user.setEmail(signupRequest.getEmail());
                 user.setVerificationCode(verificationCode);
+
         userRepository.save(user);
         try {
             emailService.sendSimpleMessage(user.getEmail(), "You have successfully registered on Weibo", "Verification code: " + verificationCode);
@@ -89,17 +93,25 @@ public class AuthService {
     public AuthResponse validateAndRefreshToken(String refreshToken) {
 
         org.springframework.security.core.userdetails.User user = null;
+
         try {
-            user = jwtService.returnUser(refreshToken, "refresh-token");
+            Jws<Claims> claims = jwtService.validateTokenAndReturnClaims(refreshToken, "refresh-token");
+            user = jwtService.returnUser(claims);
+            TokenPairId tokenPairId = jwtService.tokenPairId(claims);
+            if(tokenPairIdService.isPresent(tokenPairId) ) {
+               throw new Exception();
+            }
+
         } catch (ExpiredJwtException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT ,"Expired token");
         } catch (Exception e) {
            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bad token");
         }
         Authentication authentication = new UsernamePasswordAuthenticationToken(user, "defaultPassword", user.getAuthorities());
+        List<String> tokens = jwtService.generateTokens(authentication);
         return AuthResponse.builder()
-                .accessToken(jwtService.generateToken("access-token", authentication))
-                .refreshToken(jwtService.generateToken("refresh-token", authentication))
+                .accessToken(tokens.get(0))
+                .refreshToken(tokens.get(1))
                 .build();
 
     }
@@ -110,13 +122,11 @@ public class AuthService {
     }
 
     public boolean isUsernameAvailable(String username) {
-        if(userRepository.existsUserByUsername(username))
-            return false;
-        else return true;
+        return !userRepository.existsUserByUsername(username);
     }
     public boolean isEmailAvailable(String email) {
-        if(userRepository.existsUserByEmail(email))
-            return false;
-        else return true;
+        return !userRepository.existsUserByEmail(email);
     }
+
+
 }

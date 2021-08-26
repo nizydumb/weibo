@@ -40,7 +40,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         }
 
         org.springframework.security.core.userdetails.User user1 = new org.springframework.security
-                .core.userdetails.User(user.getUsername(), user.getPassword(),user.getStatus() == Status.ACTIVE, true, true,
+                .core.userdetails.User(user.getId().toString(), user.getPassword(),user.getStatus() == Status.ACTIVE, true, true,
                         true, grantedAuthorities );
         return user1;
     }

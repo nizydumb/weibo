@@ -20,8 +20,8 @@ public class Comment extends BaseEntity{
     @JoinColumn(name="post_id")
     private Post post;
 
-    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "likedComments")
-    private List<User> usersLiked;
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "comment")
+    private List<LikedComment> likedComments;
 
     @Column(name="body")
     private String body;
