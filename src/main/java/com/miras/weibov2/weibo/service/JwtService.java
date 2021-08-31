@@ -1,6 +1,6 @@
 package com.miras.weibov2.weibo.service;
 
-import com.miras.weibov2.weibo.dto.TokenPairId;
+import com.miras.weibov2.weibo.dto.TokenId;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
@@ -10,13 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -97,11 +94,11 @@ public class JwtService {
         return user;
 
     }
-    public TokenPairId tokenPairId(Jws<Claims> claims){
-        TokenPairId tokenPairId = new TokenPairId();
-        tokenPairId.setId((String) claims.getBody().get("tokenPairId"));
-        tokenPairId.setExpiresAt(claims.getBody().getExpiration());
-        return tokenPairId;
+    public TokenId getTokenIdFromClaims(Jws<Claims> claims){
+        TokenId tokenId = new TokenId();
+        tokenId.setId((String) claims.getBody().get("tokenId"));
+        tokenId.setExpiresAt(claims.getBody().getExpiration());
+        return tokenId;
     }
 
 

@@ -11,4 +11,8 @@ import javax.transaction.Transactional;
 @Transactional
 public interface LikedCommentsRepository extends JpaRepository<LikedComment, Long> {
 
+    public boolean existsLikedCommentByUserIdAndCommentId(long userId,long commentIdId);
+
+    public void deleteByUserIdAndCommentId(long userId, long commentId);
+
 }

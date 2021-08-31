@@ -8,6 +8,8 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -16,11 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Optional;
 import java.util.Random;
-import java.util.UUID;
 
 
 @Service
@@ -33,7 +32,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final JwtService jwtService;
-    private final TokenPairIdService tokenPairIdService;
+    private final TokenIdService tokenIdService;
 
 
 
@@ -97,8 +96,8 @@ public class AuthService {
         try {
             Jws<Claims> claims = jwtService.validateTokenAndReturnClaims(refreshToken, "refresh-token");
             user = jwtService.returnUser(claims);
-            TokenPairId tokenPairId = jwtService.tokenPairId(claims);
-            if(tokenPairIdService.isPresent(tokenPairId) ) {
+            TokenId tokenId = jwtService.getTokenIdFromClaims(claims);
+            if(tokenIdService.isPresent(tokenId) ) {
                throw new Exception();
             }
 
@@ -126,6 +125,16 @@ public class AuthService {
     }
     public boolean isEmailAvailable(String email) {
         return !userRepository.existsUserByEmail(email);
+    }
+
+    public boolean isAuthenticated(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return  authentication.isAuthenticated() && (! (authentication instanceof AnonymousAuthenticationToken));
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    public long getAuthenticatedUserId(){
+        return Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
     }
 
 

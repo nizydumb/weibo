@@ -10,7 +10,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 @Data
-public class TokenPairId {
+public class TokenId {
    String id;
    Date expiresAt;
 }

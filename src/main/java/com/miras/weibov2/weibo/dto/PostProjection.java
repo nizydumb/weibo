@@ -1,5 +1,6 @@
 package com.miras.weibov2.weibo.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.miras.weibov2.weibo.repository.LikedPostsRepository;
 import com.miras.weibov2.weibo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,10 +10,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
-@Component
+
 public interface PostProjection {
 
-    String getDescription();
+   // String getDescription();
     Date getCreated();
     long getId();
     int getNumberOfImages();
@@ -28,6 +29,9 @@ public interface PostProjection {
 
     @Value("#{target.user.getId()}")
     String getUserId();
+
+    @Value("#{target.getDescription()}")
+    String getCaption();
 
 
 

@@ -5,18 +5,15 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
-
 
 @Data
 @Builder
 @RequiredArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class PostLoadDto {
+public class PostMetaData {
 
-    PostProjection postProjection;
-    UserMetaDataDto userMetaDataDto;
+    Boolean isPostLikedByCurrentUser = null;
 
 
 }

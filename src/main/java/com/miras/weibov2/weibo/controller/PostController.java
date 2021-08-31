@@ -1,8 +1,8 @@
 package com.miras.weibov2.weibo.controller;
 
-import com.miras.weibov2.weibo.dto.PostLoadDto;
-import com.miras.weibov2.weibo.dto.PostProjection;
-import com.miras.weibov2.weibo.repository.PostRepository;
+import com.miras.weibov2.weibo.dto.PostEditDto;
+import com.miras.weibov2.weibo.dto.PostResponseDto;
+import com.miras.weibov2.weibo.entity.Post;
 import com.miras.weibov2.weibo.service.PostService;
 import com.miras.weibov2.weibo.service.StorageService;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Arrays;
 import java.util.List;
 
 
@@ -27,7 +26,7 @@ public class PostController {
     private final PostService postService;
 
     @PostMapping("/upload")
-    public ResponseEntity uploadPost(@RequestParam("images") MultipartFile[] images,@RequestParam("description") String description){
+    public ResponseEntity uploadPost(@RequestParam("images") MultipartFile[] images,@RequestParam("caption") String description){
         for (MultipartFile image: images) {
             if(image.isEmpty()) return ResponseEntity.badRequest().build();
         }
@@ -36,35 +35,62 @@ public class PostController {
     }
 
     @GetMapping("/{postId}")
-    public ResponseEntity<PostLoadDto> loadPost(@PathVariable long postId){
-        PostLoadDto postLoadDto = postService.loadPostDto(postId);
-        if (postLoadDto == null) return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        return new ResponseEntity<>(postLoadDto, HttpStatus.OK);
+    public ResponseEntity<PostResponseDto> loadPost(@PathVariable long postId){
+        PostResponseDto postResponseDto = postService.loadPostDto(postId);
+        return new ResponseEntity<>(postResponseDto, HttpStatus.OK);
     }
 
     @GetMapping("/{postId}/{imageId}")
-    public ResponseEntity<Resource> loadImage(@PathVariable long postId, @PathVariable long imageId) {
-        Resource resource = storageService.load(postId, imageId);
+    public ResponseEntity<Resource> loadPostImage(@PathVariable long postId, @PathVariable long imageId) {
+        Resource resource = postService.loadPostImage(postId, imageId);
         if (resource == null) return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"").body(resource);
     }
 
     @GetMapping("/profile")
-    public ResponseEntity loadProfilePosts(@RequestParam long id, @RequestParam(defaultValue = "0" ) int page){
-        List<PostLoadDto> profilePosts = postService.loadPostDtoProfile(id, page);
+    public ResponseEntity<List<PostResponseDto>> loadProfilePosts(@RequestParam long id, @RequestParam(defaultValue = "0" ) int page){
+        List<PostResponseDto> profilePosts = postService.loadPostDtoProfile(id, page);
         if(profilePosts.isEmpty())
             return new ResponseEntity(HttpStatus.NO_CONTENT);
         else
             return ResponseEntity.ok(profilePosts);
     }
     @GetMapping("/feed")
-    public ResponseEntity loadFeedPosts(@RequestParam(defaultValue = "0" ) int page){
-        List<PostLoadDto> feedPhotos = postService.loadPostDtoFeed(page);
+    public ResponseEntity<List<PostResponseDto>> loadFeedPosts(@RequestParam(defaultValue = "0" ) int page){
+        List<PostResponseDto> feedPhotos = postService.loadPostDtoFeed(page);
         if(feedPhotos.isEmpty())
             return new ResponseEntity(HttpStatus.NO_CONTENT);
         else
             return ResponseEntity.ok(feedPhotos);
     }
+
+//    @GetMapping("/like/{postId}")
+//    public ResponseEntity likePostAndReturnPostLoadDto(@PathVariable long postId){
+//        postService.likePost(postId);
+//        return ResponseEntity.ok().build();
+//    }
+    @PostMapping("/like")
+    public ResponseEntity likePost(@RequestBody PostEditDto postEditDto){
+        return ResponseEntity.ok(postService.likePost(postEditDto.getId()));
+    }
+
+
+    @PostMapping("/unlike")
+    public ResponseEntity unlikePost(@RequestBody PostEditDto postEditDto){
+        return ResponseEntity.ok(postService.unlikePost(postEditDto.getId()));
+    }
+
+    @PutMapping("/edit")
+    public ResponseEntity<PostResponseDto> editPost(@RequestBody PostEditDto postEditDto){
+        return ResponseEntity.ok(postService.editPost(postEditDto));
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity deletePost(@PathVariable long id){
+        postService.deletePost(id);
+        return new ResponseEntity(HttpStatus.OK);
+    }
+
 
 }

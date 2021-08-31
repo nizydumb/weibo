@@ -1,5 +1,6 @@
 package com.miras.weibov2.weibo.repository;
 
+import com.miras.weibov2.weibo.dto.LikedPostProjection;
 import com.miras.weibov2.weibo.entity.LikedPost;
 import com.miras.weibov2.weibo.entity.Post;
 import com.miras.weibov2.weibo.entity.User;
@@ -12,7 +13,15 @@ import javax.transaction.Transactional;
 @Repository
 @Transactional
 public interface LikedPostsRepository extends JpaRepository<LikedPost, Long> {
-    public boolean existsLikedPostByUserAndPost(User user, Post post);
+
     public boolean existsLikedPostByUserIdAndPostId(long userId, long postId);
+
+    LikedPostProjection findLikedPostByUserIdAndPostId(long userId, long postId);
+
+    public void deleteByUserIdAndPostId(long userId, long postId);
+
+
+
+
 
 }

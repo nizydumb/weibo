@@ -4,6 +4,7 @@ import com.miras.weibov2.weibo.dto.AuthResponse;
 import com.miras.weibov2.weibo.dto.LoginRequest;
 import com.miras.weibov2.weibo.dto.SignupRequest;
 import com.miras.weibov2.weibo.dto.VerificationRequest;
+import com.miras.weibov2.weibo.entity.RefreshToken;
 import com.miras.weibov2.weibo.service.AuthService;
 import com.miras.weibov2.weibo.service.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -40,9 +41,9 @@ public class AuthController {
         return new ResponseEntity<>("Account succesfully verified", HttpStatus.OK);
 
     }
-    @GetMapping("/refreshToken/{refreshToken}")
-    ResponseEntity validateAndRefreshToken(@PathVariable String refreshToken){
-        AuthResponse authResponse = authService.validateAndRefreshToken(refreshToken);
+    @PostMapping("/refreshToken")
+    ResponseEntity validateAndRefreshToken(@RequestBody RefreshToken refreshToken){
+        AuthResponse authResponse = authService.validateAndRefreshToken(refreshToken.getRefreshToken());
         return new ResponseEntity(authResponse, HttpStatus.OK);
     }
     @PostMapping("/isUsernameAvailable")

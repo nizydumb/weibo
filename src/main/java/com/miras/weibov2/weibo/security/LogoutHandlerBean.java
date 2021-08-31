@@ -1,14 +1,13 @@
 package com.miras.weibov2.weibo.security;
 
-import com.miras.weibov2.weibo.dto.TokenPairId;
+import com.miras.weibov2.weibo.dto.TokenId;
 import com.miras.weibov2.weibo.service.JwtService;
-import com.miras.weibov2.weibo.service.TokenPairIdService;
+import com.miras.weibov2.weibo.service.TokenIdService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 @Component
 public class LogoutHandlerBean implements LogoutHandler {
     private final JwtService jwtService;
-    private final TokenPairIdService tokenPairIdService;
+    private final TokenIdService tokenIdService;
 
 
     @SneakyThrows
@@ -28,7 +27,7 @@ public class LogoutHandlerBean implements LogoutHandler {
         String authrorizationHeader = httpServletRequest.getHeader("Authorization");
         String token = authrorizationHeader.replace("Bearer ", "");
         Jws<Claims> claims = jwtService.validateTokenAndReturnClaims(token, "access-token");
-        TokenPairId tokenPairId = jwtService.tokenPairId(claims);
-        tokenPairIdService.save(tokenPairId);
+        TokenId tokenId = jwtService.getTokenIdFromClaims(claims);
+        tokenIdService.save(tokenId);
     }
 }

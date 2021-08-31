@@ -6,13 +6,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
+
 @Data
 @Builder
 @RequiredArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class UserMetaDataDto {
+public class PostResponseDto {
 
-    Boolean isPostLikedByCurrentUser = null;
+    PostProjection postProjection;
+    PostMetaData postMetaData;
+
 
 }
