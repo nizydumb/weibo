@@ -1,15 +1,13 @@
 package com.miras.weibov2.weibo.service;
 
-import com.miras.weibov2.weibo.dto.TokenId;
+import com.miras.weibov2.weibo.dto.Token;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -18,7 +16,7 @@ import org.springframework.stereotype.Service;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static java.util.Arrays.stream;
+
 
 @Service
 @RequiredArgsConstructor
@@ -30,8 +28,6 @@ public class JwtService {
     @Value("${jwt.key.refresh}")
     String refreshTokenKey;
 
-    @Autowired
-    RedisTemplate<String, String> redisTemplate;
 
 
     public List<String> generateTokens(Authentication authentication) {
@@ -43,13 +39,13 @@ public class JwtService {
         Calendar refreshExpirationTime = Calendar.getInstance();
         refreshExpirationTime.setTime(issuedTime);
         accessExpirationTime.add(Calendar.MINUTE, 30);
-       refreshExpirationTime.add(Calendar.HOUR_OF_DAY, 24);
+        refreshExpirationTime.add(Calendar.HOUR_OF_DAY, 24);
 
         String accessToken = Jwts.builder()
                 .setHeaderParam("type", "access-token")
                 .claim("userId", authentication.getName())
                 .claim("authorities", authentication.getAuthorities())
-                .claim("tokenPairId", uuid)
+                .claim("tokenId", uuid)
                 .setIssuedAt(issuedTime)
                 .setExpiration(accessExpirationTime.getTime())
                 .signWith(Keys.hmacShaKeyFor(accessTokenKey.getBytes(StandardCharsets.UTF_8)))
@@ -58,7 +54,7 @@ public class JwtService {
                 .setHeaderParam("type", "refresh-token")
                 .claim("userId", authentication.getName())
                 .claim("authorities", authentication.getAuthorities())
-                .claim("tokenPairId", uuid)
+                .claim("tokenId", uuid)
                 .setIssuedAt(issuedTime)
                 .setExpiration(refreshExpirationTime.getTime())
                 .signWith(Keys.hmacShaKeyFor(refreshTokenKey.getBytes(StandardCharsets.UTF_8)))
@@ -94,11 +90,11 @@ public class JwtService {
         return user;
 
     }
-    public TokenId getTokenIdFromClaims(Jws<Claims> claims){
-        TokenId tokenId = new TokenId();
-        tokenId.setId((String) claims.getBody().get("tokenId"));
-        tokenId.setExpiresAt(claims.getBody().getExpiration());
-        return tokenId;
+    public Token getTokenIdFromClaims(Jws<Claims> claims){
+        Token token = new Token();
+        token.setId((String) claims.getBody().get("tokenId"));
+        token.setExpiresAt(claims.getBody().getExpiration());
+        return token;
     }
 
 

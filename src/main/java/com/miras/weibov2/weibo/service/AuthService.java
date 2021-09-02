@@ -32,7 +32,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final JwtService jwtService;
-    private final TokenIdService tokenIdService;
+    private final TokenService tokenService;
 
 
 
@@ -96,8 +96,8 @@ public class AuthService {
         try {
             Jws<Claims> claims = jwtService.validateTokenAndReturnClaims(refreshToken, "refresh-token");
             user = jwtService.returnUser(claims);
-            TokenId tokenId = jwtService.getTokenIdFromClaims(claims);
-            if(tokenIdService.isPresent(tokenId) ) {
+            Token token = jwtService.getTokenIdFromClaims(claims);
+            if(tokenService.isPresent(token) ) {
                throw new Exception();
             }
 

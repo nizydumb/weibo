@@ -44,8 +44,8 @@ public class User extends BaseEntity{
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
     private List<Post> myPosts = new ArrayList<>();
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
-    private List<Comment> myComments = new ArrayList<>();
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "author")
+    private List<Comment> myComments;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
     private List<LikedPost> likedPosts;

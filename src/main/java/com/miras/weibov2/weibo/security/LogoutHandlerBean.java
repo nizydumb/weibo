@@ -1,8 +1,9 @@
 package com.miras.weibov2.weibo.security;
 
-import com.miras.weibov2.weibo.dto.TokenId;
+import com.miras.weibov2.weibo.dto.Token;
 import com.miras.weibov2.weibo.service.JwtService;
-import com.miras.weibov2.weibo.service.TokenIdService;
+
+import com.miras.weibov2.weibo.service.TokenService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 @Component
 public class LogoutHandlerBean implements LogoutHandler {
     private final JwtService jwtService;
-    private final TokenIdService tokenIdService;
+    private final TokenService tokenIdService;
 
 
     @SneakyThrows
@@ -27,7 +28,7 @@ public class LogoutHandlerBean implements LogoutHandler {
         String authrorizationHeader = httpServletRequest.getHeader("Authorization");
         String token = authrorizationHeader.replace("Bearer ", "");
         Jws<Claims> claims = jwtService.validateTokenAndReturnClaims(token, "access-token");
-        TokenId tokenId = jwtService.getTokenIdFromClaims(claims);
+        Token tokenId = jwtService.getTokenIdFromClaims(claims);
         tokenIdService.save(tokenId);
     }
 }

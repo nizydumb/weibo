@@ -78,7 +78,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .addFilterBefore(jwtVerifierFilter, UsernamePasswordAuthenticationFilter.class)
 
                 .logout()
-                    .logoutUrl("auth/logout")
+                    .logoutUrl("/auth/logout")
                     .addLogoutHandler(logoutHandlerBean)
                     .permitAll()
                     .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.OK))

@@ -1,8 +1,11 @@
 package com.miras.weibov2.weibo.controller;
 
+import com.miras.weibov2.weibo.dto.CommentRequestDto;
+import com.miras.weibov2.weibo.dto.CommentResponseDto;
 import com.miras.weibov2.weibo.dto.PostEditDto;
 import com.miras.weibov2.weibo.dto.PostResponseDto;
 import com.miras.weibov2.weibo.entity.Post;
+import com.miras.weibov2.weibo.service.CommentService;
 import com.miras.weibov2.weibo.service.PostService;
 import com.miras.weibov2.weibo.service.StorageService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,7 @@ public class PostController {
 
     private final StorageService storageService;
     private final PostService postService;
+    private final CommentService commentService;
 
     @PostMapping("/upload")
     public ResponseEntity uploadPost(@RequestParam("images") MultipartFile[] images,@RequestParam("caption") String description){
@@ -91,6 +95,15 @@ public class PostController {
         postService.deletePost(id);
         return new ResponseEntity(HttpStatus.OK);
     }
+
+    @PostMapping("/comment")
+    public ResponseEntity commentPost(@RequestBody CommentRequestDto commentRequestDto){
+        CommentResponseDto commentResponseDto = commentService.commentPostAndReturnCommentResponseDto(commentRequestDto);
+        return ResponseEntity.ok(commentResponseDto);
+
+    }
+
+
 
 
 }

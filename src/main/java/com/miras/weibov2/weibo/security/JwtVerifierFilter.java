@@ -1,11 +1,10 @@
 package com.miras.weibov2.weibo.security;
 
-//import io.jsonwebtoken.lang.Strings;
-//import com.miras.weibov2.weibo.service.JwtService;
-import com.miras.weibov2.weibo.dto.TokenId;
+import com.miras.weibov2.weibo.dto.Token;
 import com.miras.weibov2.weibo.service.JwtService;
-import com.miras.weibov2.weibo.service.TokenIdService;
+import com.miras.weibov2.weibo.service.TokenService;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -26,7 +25,7 @@ import javax.servlet.http.HttpServletResponse;
 public class JwtVerifierFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-    private final TokenIdService tokenIdService;
+    private final TokenService tokenService;
 
 
 
@@ -42,29 +41,29 @@ public class JwtVerifierFilter extends OncePerRequestFilter {
         }
         String token = authrorizationHeader.replace("Bearer ", "");
         User user = null;
-        TokenId tokenId = null;
+        Token tokenId = null;
         Jws<Claims> claims = null;
 
         try {
               claims = jwtService.validateTokenAndReturnClaims(token, "access-token");
-//        } catch (ExpiredJwtException e) {
-////            httpServletResponse.setStatus(401);
-////            httpServletResponse.getWriter().write("Expired Token");
-//            filterChain.doFilter(httpServletRequest, httpServletResponse);
-//            return;
+        } catch (ExpiredJwtException e) {
+            httpServletResponse.setStatus(401);
+            httpServletResponse.getWriter().write("Expired Token");
+            filterChain.doFilter(httpServletRequest, httpServletResponse);
+            return;
 
         } catch (Exception e) {
-//            httpServletResponse.setStatus(403);
-//            httpServletResponse.getWriter().write("Bad token");
+            httpServletResponse.setStatus(403);
+            httpServletResponse.getWriter().write("Bad token");
             filterChain.doFilter(httpServletRequest, httpServletResponse);
             return;
         }
         user = jwtService.returnUser(claims);
         tokenId = jwtService.getTokenIdFromClaims(claims);
         try{
-        if(!tokenIdService.isPresent(tokenId) ){
-            Authentication authentication = new UsernamePasswordAuthenticationToken(user, "defaultPassword",user.getAuthorities());
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        if(!tokenService.isPresent(tokenId) ){
+           Authentication authentication = new UsernamePasswordAuthenticationToken(user, "defaultPassword",user.getAuthorities());
+           SecurityContextHolder.getContext().setAuthentication(authentication);
         }}
         catch (RedisConnectionFailureException e){
             Authentication authentication = new UsernamePasswordAuthenticationToken(user, "defaultPassword",user.getAuthorities());
