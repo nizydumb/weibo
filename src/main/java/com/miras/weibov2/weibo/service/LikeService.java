@@ -1,14 +1,10 @@
 package com.miras.weibov2.weibo.service;
 
-import com.miras.weibov2.weibo.dto.LikedPostProjection;
 import com.miras.weibov2.weibo.entity.*;
 import com.miras.weibov2.weibo.repository.LikedCommentsRepository;
 import com.miras.weibov2.weibo.repository.LikedPostsRepository;
-import com.miras.weibov2.weibo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor

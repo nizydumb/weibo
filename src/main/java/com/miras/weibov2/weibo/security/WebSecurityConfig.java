@@ -71,6 +71,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers("/auth/**").permitAll()
                 .antMatchers("/users/**").permitAll()
+                .antMatchers("/v2/api-docs", "/configuration/ui", "/swagger-resources", "/configuration/security", "/swagger-ui.html", "/webjars/**","/swagger-resources/configuration/ui","/null/swagger-resources/configuration/ui","/swagger-ui.html").permitAll()
+               // .antMatchers("/v2/**").permitAll()
+               // .antMatchers("/swagger-ui.html").permitAll()
+               // .antMatchers("/webjars/**").permitAll()
+
                 .antMatchers(HttpMethod.GET,"/post/**").permitAll()
                 .anyRequest()
                 .authenticated()
@@ -82,6 +87,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                     .addLogoutHandler(logoutHandlerBean)
                     .permitAll()
                     .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.OK))
+
 
 
 

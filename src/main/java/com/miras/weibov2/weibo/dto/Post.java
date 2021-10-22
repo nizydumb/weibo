@@ -11,28 +11,29 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 
 
-public interface PostProjection {
+public interface Post {
 
-   // String getDescription();
+
     Date getCreated();
     long getId();
+
+    @Value("#{target.images == null ? 0 : target.images.size()}")
     int getNumberOfImages();
 
-    @Value("#{target.likes.size()}")
+    @Value("#{target.likes == null ? 0 : target.likes.size()}")
     int getNumberOfLikes();
 
-    @Value("#{target.comments.size()}")
+    @Value("#{target.comments == null ? 0 : target.comments.size()}")
     int getNumberOfComments();
 
-    @Value("#{target.user.getUsername()}")
-    String getUsername();
+    UserProjection getUser();
 
-    @Value("#{target.user.getId()}")
-    String getUserId();
-
-    @Value("#{target.getDescription()}")
+    @Value("#{target.getDescription() == null ? '' : target.getDescription()}")
     String getCaption();
 
 
-
+    interface UserProjection{
+        long getId();
+        String getUsername();
+    }
 }

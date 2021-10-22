@@ -3,6 +3,7 @@ package com.miras.weibov2.weibo.service;
 import com.miras.weibov2.weibo.dto.*;
 import com.miras.weibov2.weibo.entity.User;
 import com.miras.weibov2.weibo.repository.UserRepository;
+import com.miras.weibov2.weibo.security.UserDetailsServiceImpl;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
@@ -14,6 +15,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -33,6 +35,8 @@ public class AuthService {
     private final EmailService emailService;
     private final JwtService jwtService;
     private final TokenService tokenService;
+    private final UserDetailsServiceImpl userDetailsService;
+
 
 
 
@@ -69,7 +73,7 @@ public class AuthService {
         }catch (Exception e){
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,"Email service error");
         }
-        //userRepository.save(user);
+
     }
 
 
@@ -138,4 +142,19 @@ public class AuthService {
     }
 
 
+    @PreAuthorize("isAuthenticated()")
+    public void changePassword(PasswordChange passwordChange) {
+        User user = userRepository.findById(getAuthenticatedUserId()).get();
+        if(passwordEncoder.matches(passwordChange.getOldPassword(), user.getPassword())){
+            userRepository.updatePassword(user.getId(), passwordEncoder.encode(passwordChange.getNewPassword()));
+        }
+        else throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong password");
+
+    }
+    public void logoutSample(String authorizationHeader) throws Exception {
+        String token = authorizationHeader.replace("Bearer ", "");
+        Jws<Claims> claims = jwtService.validateTokenAndReturnClaims(token, "access-token");
+        Token tokenId = jwtService.getTokenIdFromClaims(claims);
+        tokenService.save(tokenId);
+    }
 }

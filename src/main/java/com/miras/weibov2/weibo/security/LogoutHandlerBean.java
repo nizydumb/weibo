@@ -31,4 +31,6 @@ public class LogoutHandlerBean implements LogoutHandler {
         Token tokenId = jwtService.getTokenIdFromClaims(claims);
         tokenIdService.save(tokenId);
     }
+
+
 }

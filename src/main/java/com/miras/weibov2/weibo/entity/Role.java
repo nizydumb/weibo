@@ -20,7 +20,6 @@ public class Role extends BaseEntity {
     private String name;
 
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "roles")
-    @JsonBackReference
     private List<User> users;
 
 

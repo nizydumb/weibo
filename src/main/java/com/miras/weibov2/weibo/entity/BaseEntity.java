@@ -1,20 +1,18 @@
 package com.miras.weibov2.weibo.entity;
 
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.Target;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.util.Date;
 
 @MappedSuperclass
-@Data
+@Getter
+@Setter
 @EntityListeners(AuditingEntityListener.class)
 public class BaseEntity {
 
@@ -23,11 +21,11 @@ public class BaseEntity {
     private Long id;
 
     @CreatedDate
-    @Column(name = "created")
+    @Column(name = "created", updatable = false)
     private Date created;
 
     @LastModifiedDate
-    @Column(name = "updated")
+    @Column(name = "updated", updatable = true)
     private Date updated;
 
     @Enumerated(EnumType.STRING)

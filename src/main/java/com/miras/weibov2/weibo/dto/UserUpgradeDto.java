@@ -2,10 +2,13 @@ package com.miras.weibov2.weibo.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
-public class ProfileEditDto {
+public class UserUpgradeDto {
 
     String name;
 

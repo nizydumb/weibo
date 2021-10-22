@@ -49,13 +49,16 @@ public class JwtVerifierFilter extends OncePerRequestFilter {
         } catch (ExpiredJwtException e) {
             httpServletResponse.setStatus(401);
             httpServletResponse.getWriter().write("Expired Token");
-            filterChain.doFilter(httpServletRequest, httpServletResponse);
+            httpServletResponse.getWriter().flush();
+//            filterChain.doFilter(httpServletRequest, httpServletResponse);
             return;
 
         } catch (Exception e) {
             httpServletResponse.setStatus(403);
             httpServletResponse.getWriter().write("Bad token");
-            filterChain.doFilter(httpServletRequest, httpServletResponse);
+            httpServletResponse.getWriter().flush();
+
+//            filterChain.doFilter(httpServletRequest, httpServletResponse);
             return;
         }
         user = jwtService.returnUser(claims);

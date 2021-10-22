@@ -2,9 +2,7 @@ package com.miras.weibov2.weibo.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import lombok.Builder;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
@@ -13,11 +11,14 @@ import java.util.List;
 
 @Entity
 @Table(name = "users")
-@Data
+@Getter
+@Setter
+@Builder
+@RequiredArgsConstructor
+@AllArgsConstructor
 public class User extends BaseEntity{
 
     @Column(name = "username", length = 20)
-    @NotEmpty
     private String username;
 
     @Column(name = "full_name", length = 50)
@@ -53,10 +54,10 @@ public class User extends BaseEntity{
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
     private List<LikedComment> likedComments;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "requestFrom")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "follower")
     private List<FollowRequest> outgoingFollowRequests;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "requestTo")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "followed")
     private List<FollowRequest> incomingFollowRequests;
 
 
@@ -79,7 +80,6 @@ public class User extends BaseEntity{
     @JoinTable(name = "users_roles",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "role_id", referencedColumnName = "id")})
-    @JsonManagedReference
     private List<Role> roles = new ArrayList<>();
 
 
@@ -87,18 +87,35 @@ public class User extends BaseEntity{
     String verificationCode = null;
 
 
+//    @ManyToMany(fetch = FetchType.LAZY)
+//    @JoinTable(name = "users_followers",
+//                joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
+//                inverseJoinColumns = {@JoinColumn(name = "follower_id", referencedColumnName = "id")})
+//    private List<User> followers = new ArrayList<>();
+//
+//
+//
+//
+//    @ManyToMany(fetch = FetchType.LAZY)
+//    @JoinTable(name = "users_followers",
+//            joinColumns = {@JoinColumn(name = "follower_id", referencedColumnName = "id")},
+//            inverseJoinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
+//    private List<User> followings = new ArrayList<>();
+
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "users_followers",
-                joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
-                inverseJoinColumns = {@JoinColumn(name = "follower_id", referencedColumnName = "id")})
+    @JoinTable(name = "follow_requests",
+            joinColumns = {@JoinColumn(name = "followed_id", referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "follower_id", referencedColumnName = "id")})
     private List<User> followers = new ArrayList<>();
 
-
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "users_followings",
-            joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
-            inverseJoinColumns = {@JoinColumn(name = "following_id", referencedColumnName = "id")})
+    @JoinTable(name = "follow_requests",
+            joinColumns = {@JoinColumn(name = "follower_id", referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "followed_id", referencedColumnName = "id")})
     private List<User> followings = new ArrayList<>();
+
+    @Lob
+    private byte[] image;
 
 
 

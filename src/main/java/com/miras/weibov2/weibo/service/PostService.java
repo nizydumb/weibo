@@ -1,15 +1,14 @@
 package com.miras.weibov2.weibo.service;
 
-import com.miras.weibov2.weibo.dto.PostEditDto;
-import com.miras.weibov2.weibo.dto.PostResponseDto;
-import com.miras.weibov2.weibo.dto.PostProjection;
+
+import com.miras.weibov2.weibo.dto.PostResponse;
+import com.miras.weibov2.weibo.dto.Post;
 import com.miras.weibov2.weibo.dto.PostMetaData;
-import com.miras.weibov2.weibo.entity.Post;
+import com.miras.weibov2.weibo.entity.Image;
 import com.miras.weibov2.weibo.entity.User;
 import com.miras.weibov2.weibo.repository.PostRepository;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -20,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -29,111 +29,108 @@ import java.util.stream.Stream;
 public class PostService {
 
     private final PostRepository postRepository;
-    private final StorageService storageService;
     private final UserService userService;
     private final LikeService likeService;
     private final AuthService authService;
-
-
-    @Value("${post.upload-dir}")
-    String postFolder;
-
+    private final ImageService imageService;
 
 
 
     @PreAuthorize("isAuthenticated()")
-    public PostResponseDto uploadPost(MultipartFile[] images, String description) {
-        User currentUser = new User();
-        currentUser.setId(authService.getAuthenticatedUserId());
-        Post post = Post.builder()
-                .description(description)
-                .numberOfImages(images.length)
-                .user(currentUser)
-                .build();
+    public PostResponse uploadPost(MultipartFile[] images, String description) {
+        User user = userService.getUserById(authService.getAuthenticatedUserId());
+        com.miras.weibov2.weibo.entity.Post post = new com.miras.weibov2.weibo.entity.Post();
+        post.setUser(user);
+        post.setDescription(description);
         postRepository.saveAndFlush(post);
+        long postId = post.getId();
+        List<Image> nullImages = new ArrayList<>();
+        for(MultipartFile image : images){
+            nullImages.add(new Image());
+        }
+        post.setImages(nullImages);
+
         try {
-            for (MultipartFile image : images) {
-                storageService.save(image, post.getId(), postFolder);
-            }
+            imageService.uploadImage(images, postId);
         } catch(Exception e) {
-            postRepository.deleteById(post.getId());
+            postRepository.deleteById(postId);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return loadPostDto(post.getId());
+        return loadPostDto(postId);
 
 
     }
 
     //half-auth
-    public PostResponseDto loadPostDto(long postId) {
-        PostProjection postProjection = postRepository.findPostById(postId);
-        if(postProjection == null ) throw new ResponseStatusException(HttpStatus.NO_CONTENT);
+    public PostResponse loadPostDto(long postId) {
+        Post post = postRepository.findPostById(postId);
+        if(post == null ) throw new ResponseStatusException(HttpStatus.NO_CONTENT);
         PostMetaData postMetaData = null;
         if(authService.isAuthenticated())
-           postMetaData = new PostMetaData(likeService.isPostLikedByUser(authService.getAuthenticatedUserId(), postProjection.getId()));
-        return new PostResponseDto(postProjection, postMetaData);
+           postMetaData = new PostMetaData(likeService.isPostLikedByUser(authService.getAuthenticatedUserId(), post.getId()));
+        return new PostResponse(post, postMetaData);
     }
 
     //half-auth
-    public List<PostResponseDto> loadPostDtoProfile(long userId, int pageNumber){
+    public List<PostResponse> loadPostDtoProfile(long userId, int pageNumber){
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return loadPostDtoProfileByUserId(userId, pageNumber).map(postDtoProfile ->
+        return profilePostsStream(userId, pageNumber).map(postDtoProfile ->
         {
-               if(authService.isAuthenticated()) return new PostResponseDto(postDtoProfile,
+               if(authService.isAuthenticated()) return new PostResponse(postDtoProfile,
                        new PostMetaData(likeService.isPostLikedByUser(authService.getAuthenticatedUserId(), postDtoProfile.getId())));
-               else return new PostResponseDto(postDtoProfile, null);
+               else return new PostResponse(postDtoProfile, null);
         }
         ).collect(Collectors.toList());
     }
 
     //auth
     @PreAuthorize("isAuthenticated()")
-    public List<PostResponseDto> loadPostDtoFeed(int pageNumber){
+    public List<PostResponse> loadPostDtoFeed(int pageNumber){
         long userId = authService.getAuthenticatedUserId();
-        return loadPostDtoFeedByUserId(userService.getFollowingUsersIds(userId), pageNumber)
-                .map(postDto -> new PostResponseDto(postDto, new PostMetaData(likeService.isPostLikedByUser(userId, postDto.getId())) ))
+        return feedPostsStream(userService.getFollowingUsersIds(userId), pageNumber)
+                .map(postDto -> new PostResponse(postDto, new PostMetaData(likeService.isPostLikedByUser(userId, postDto.getId())) ))
                 .collect(Collectors.toList());
     }
 
 
     //auth
     @PreAuthorize("isAuthenticated()")
-    public PostResponseDto likePost(long postId) {
+    public PostResponse likePost(long postId) {
         long userId = authService.getAuthenticatedUserId();
-        if(!postRepository.existsById(postId)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        if(!postRepository.existsById(postId)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Post with id: " + postId + " not exists");
         likeService.likePostByUser(postId, userId);
-        return new PostResponseDto(postRepository.findPostById(postId), new PostMetaData(likeService.isPostLikedByUser(userId, postId)));
+        return new PostResponse(postRepository.findPostById(postId), new PostMetaData(likeService.isPostLikedByUser(userId, postId)));
 
     }
 
     //authentication
     @PreAuthorize("isAuthenticated()")
-    public PostResponseDto unlikePost(long postId) {
+    public PostResponse unlikePost(long postId) {
         long userId = authService.getAuthenticatedUserId();
-        if(!postRepository.existsById(postId)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        if(!postRepository.existsById(postId)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Post with id: " + postId + " not exists");
         likeService.deleteLikeByUserIdAndPostId(postId, userId);
-        return new PostResponseDto(postRepository.findPostById(postId), new PostMetaData(likeService.isPostLikedByUser(userId, postId)));
+        return new PostResponse(postRepository.findPostById(postId), new PostMetaData(likeService.isPostLikedByUser(userId, postId)));
 
     }
 
 
     //full-autorization
-    @PreAuthorize("isAuthenticated() and @postService.existsUserByPost(@userService.currentUserId, #postEditDto.id)")
-    public PostResponseDto editPost(PostEditDto postEditDto) {
+    @PreAuthorize("isAuthenticated() and @postService.existsUserByPost(@authService.authenticatedUserId, #postEditDto.id)")
+    public PostResponse editPost(long postId, String description) {
         // initial method first loads Post object from db and saves it causing performance issue
 //        Post post = postRepository.findById(postEditDto.getId()).get();
 //        post.setId(postEditDto.getId());
 //        post.setDescription(postEditDto.getDescription());
 //        postRepository.save(post);
-        postRepository.update(postEditDto.getId(), postEditDto.getDescription());
-        return loadPostDto(postEditDto.getId());
+        postRepository.update(postId, description);
+        return loadPostDto(postId);
 
 
     }
 
     //full-authorization
-    @PreAuthorize("isAuthenticated() and @postService.existsUserByPost(@userService.currentUserId, #postId)")
+    @PreAuthorize("isAuthenticated() and @postService.existsUserByPost(@authService.authenticatedUserId, #postId)")
     public void deletePost(long postId){
         postRepository.deleteById(postId);
     }
@@ -142,8 +139,8 @@ public class PostService {
 
 
     //no-auth
-    public Resource loadPostImage(long postId, long imageId) {
-        return storageService.load(postId, imageId, postFolder);
+    public Resource getImage(long postId, long imageId) {
+        return imageService.getImage(postId, imageId);
     }
 
 
@@ -151,14 +148,16 @@ public class PostService {
         return postRepository.existsByIdAndUserId(postId, userId);
     }
 
-    private Stream<PostProjection> loadPostDtoProfileByUserId(long userId, int pageNumber) {
-        User user = new User();
-        user.setId(userId);
-        return postRepository.findAllByUserOrderByCreatedDesc(user, PageRequest.of(pageNumber,20)).stream();
+    private Stream<Post> profilePostsStream(long userId, int pageNumber) {
+        return postRepository.findAllByUserIdOrderByCreatedDesc(userId, PageRequest.of(pageNumber,20)).stream();
     }
 
-    private Stream<PostProjection> loadPostDtoFeedByUserId(List<Long> followingIds, int pageNumber) {
+    private Stream<Post> feedPostsStream(List<Long> followingIds, int pageNumber) {
         return postRepository.findAllByUserIdInOrderByCreatedDesc(followingIds, PageRequest.of(pageNumber, 20)).stream();
 
+    }
+
+    public boolean existsPostById(long postId) {
+        return postRepository.existsById(postId);
     }
 }

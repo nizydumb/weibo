@@ -1,0 +1,43 @@
+version: '3.7'
+services:
+  mysql-standalone:
+    image: 'mysql:8.0.19'
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=miras
+      - MYSQL_PASSWORD=miras
+      - MYSQL_DATABASE=weibov2
+    ports:
+    - "3307:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - backend
+  redis-standalone:
+    image: 'redis:alpine'
+    ports:
+    - "16379:16379"
+    networks:
+      - backend
+  spring-boot-container:
+    image: spring-boot-container
+    ports:
+    - "8090:8090"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-standalone:3306/weibov2?useSSL=false&serverTimezone=UTC&useLegacyDatetimeCode=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: miras
+      SPRING_DATASOURCE_PASSWORD: miras
+    build:
+      context: "./"
+      dockerfile: "Dokerfile"
+    depends_on:
+      - mysql-standalone
+      - redis-standalone
+    networks:
+      - backend
+volumes:
+  db-data:
+
+  # Networks to be created to facilitate communication between containers
+networks:
+  backend:

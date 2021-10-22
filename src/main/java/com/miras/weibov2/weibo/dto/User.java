@@ -4,22 +4,26 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import org.springframework.beans.factory.annotation.Value;
 
 
-public interface UserProjection {
+public interface User {
 
     long getId();
     String getUsername();
 
     @Value("#{target.followers.size()}")
-    int numberOfFollowers();
+    int getNumberOfFollowers();
 
     @Value("#{target.followings.size()}")
-    int numberOfFollowings();
+    int getNumberOfFollowings();
+
+    @Value("#{target.myPosts.size()}")
+    int getNumberOfPosts();
 
     String getBio();
 
     String getWebsite();
 
-    String getFullName();
+    @Value("#{target.fullName}")
+    String getName();
 
 
 

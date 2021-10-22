@@ -15,13 +15,18 @@ import javax.persistence.*;
 @AllArgsConstructor
 public class FollowRequest extends BaseEntity{
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="request_from_user_id")
-    private User requestFrom;
+
+    //Status - Active means Request is not approved by opposite side
+    //Status - NotActive means Request is accepted
+    //Status - Deleted means Request is not accepted and deleted by opposite side
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="request_to_user_id")
-    private User requestTo;
+    @JoinColumn(name="follower_id", nullable = false)
+    private User follower;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="followed_id", nullable = false)
+    private User followed;
 
 
 
