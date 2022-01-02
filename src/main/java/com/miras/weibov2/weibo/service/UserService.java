@@ -27,13 +27,6 @@ public class UserService {
     private final AuthService authService;
     private final FollowRequestService followRequestService;
 
-
-
-    @Value("${logo.upload-dir}")
-    String logoFolder;
-
-    
-    
     
 
 
