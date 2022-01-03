@@ -14,4 +14,7 @@ public interface FollowRequestRepository extends JpaRepository<FollowRequest, Lo
 
     public FollowRequest findByFollowerIdAndFollowedId(long requestFromId, long requestToId);
 
+
+
+
 }

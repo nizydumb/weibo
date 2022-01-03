@@ -54,4 +54,13 @@ public interface UserRepository extends JpaRepository<com.miras.weibov2.weibo.en
     @Modifying
     @Query("update User user set user.password = :password where user.id = :id")
     void updatePassword(@Param("id") Long id, @Param("password") String encodedPassword);
+
+
+    List<User> findAllByUsernameContainsOrFullNameContains(String username, String fullName);
+
+
+
+
+    List<User> findAllByFollowingsContaining(com.miras.weibov2.weibo.entity.User user);
+
 }

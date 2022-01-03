@@ -60,4 +60,17 @@ public class UserController {
         return ResponseEntity.ok(userResponse);
     }
 
+    @GetMapping("/search")
+    public ResponseEntity findByName(@RequestParam("name") String name){
+
+
+        return ResponseEntity.ok(userService.findByName(name));
+
+
+    }
+
+
+
+
+
 }

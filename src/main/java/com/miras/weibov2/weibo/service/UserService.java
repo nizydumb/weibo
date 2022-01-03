@@ -10,12 +10,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -104,5 +106,32 @@ public class UserService {
                 .map(followings -> followings.getId())
                 .collect(Collectors.toList());
     }
+
+    public List<UserResponse> findByName(String name) {
+
+        return userRepository.findAllByUsernameContainsOrFullNameContains(name, name).stream()
+                .map(user -> new UserResponse(user, authService.isAuthenticated() ? new UserMetaData(isUserFollowedByUser(user.getId(), authService.getAuthenticatedUserId())): new UserMetaData())).collect(Collectors.toList());
+
+    }
+
+    public List<UserResponse> findAllFollowers(Long userId){
+
+        com.miras.weibov2.weibo.entity.User user = new com.miras.weibov2.weibo.entity.User();
+        user.setId(userId);
+        return userRepository.findAllByFollowingsContaining(user).stream().map(users -> new UserResponse(users, authService.isAuthenticated() ? new UserMetaData(isUserFollowedByUser(users.getId(), authService.getAuthenticatedUserId())): new UserMetaData())).collect(Collectors.toList());
+
+    }
+
+    public List<UserResponse> findAllFollowings(Long userId){
+
+        com.miras.weibov2.weibo.entity.User user = new com.miras.weibov2.weibo.entity.User();
+        user.setId(userId);
+        return userRepository.findAllByFollowersContaining(user).stream().map(users -> new UserResponse(users, authService.isAuthenticated() ? new UserMetaData(isUserFollowedByUser(users.getId(), authService.getAuthenticatedUserId())): new UserMetaData())).collect(Collectors.toList());
+
+
+
+    }
+
+
 }
 
